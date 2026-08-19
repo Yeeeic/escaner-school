@@ -312,4 +312,6 @@ SQLite usa WAL y timeout de 30 segundos. Para una sola terminal es suficiente. D
 
 ## Licencia y datos
 
+Este proyecto está disponible bajo la [licencia MIT](LICENSE). Puede utilizarse, modificarse y distribuirse conservando el aviso de copyright y la licencia.
+
 Prototipo sin logotipos protegidos ni datos reales. Los alumnos de `seed.py` son ficticios. Antes de utilizarlo físicamente, realiza revisión legal, de privacidad, accesibilidad, amenazas y continuidad operativa.
