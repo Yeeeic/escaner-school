@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar sesión · Escáner School</title>
+  <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="login-body">
+  <div class="login-decoration"></div>
+  <main class="login-card">
+    <div class="login-brand"><span class="brand-mark"><i class="fa-solid fa-shield-halved"></i></span><div><strong>ESCÁNER</strong><small>SCHOOL</small></div></div>
+    <div class="login-copy"><span>PORTAL SEGURO</span><h1>Bienvenido de nuevo</h1><p>Ingresa tus credenciales administrativas para continuar.</p></div>
+    {% if error %}<div class="alert error"><i class="fa-solid fa-circle-exclamation"></i>{{ error }}</div>{% endif %}
+    <form method="post" action="/admin/login" class="stack-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Usuario<div class="input-icon"><i class="fa-regular fa-user"></i><input name="username" required autofocus autocomplete="username" maxlength="64"></div></label>
+      <label>Contraseña<div class="input-icon"><i class="fa-solid fa-lock"></i><input type="password" name="password" required autocomplete="current-password"></div></label>
+      <button class="button primary wide" type="submit">INICIAR SESIÓN <i class="fa-solid fa-arrow-right"></i></button>
+    </form>
+    <a class="back-link" href="/"><i class="fa-solid fa-arrow-left"></i> Volver al escáner</a>
+  </main>
+</body>
+</html>

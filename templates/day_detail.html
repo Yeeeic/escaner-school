@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Jornada {{ day.date_label }}{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><a class="breadcrumb" href="{{ '/admin/days?papelera=1' if day.deleted else '/admin/days' }}"><i class="fa-solid fa-arrow-left"></i> Jornadas</a><h1>Jornada del {{ day.date_label }}</h1><p>Consulta histórica completa; los datos permanecen guardados entre días.</p></div>
+  <div class="button-row"><a class="button export" href="/admin/records/export/xlsx?from={{ day.date }}&to={{ day.date }}"><i class="fa-solid fa-file-excel"></i> Exportar Excel</a>{% if day.deleted %}<form method="post" action="/admin/days/{{ day.id }}/restore"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button primary"><i class="fa-solid fa-rotate-left"></i> Restaurar jornada</button></form>{% endif %}</div>
+</div>
+{% if day.deleted %}<div class="trash-note"><i class="fa-solid fa-trash-can"></i> Esta jornada está en la papelera, pero sus movimientos siguen disponibles.</div>{% endif %}
+<section class="day-detail-grid">
+  <article class="detail-metric"><span>ESTADO</span><strong>{{ 'BORRADA' if day.deleted else day.status }}</strong></article>
+  <article class="detail-metric"><span>ENTRADAS</span><strong>{{ day.entries }}</strong></article>
+  <article class="detail-metric"><span>SALIDAS</span><strong>{{ day.exits }}</strong></article>
+  <article class="detail-metric"><span>RECHAZADOS</span><strong>{{ day.denied }}</strong></article>
+  <article class="detail-metric"><span>PENDIENTES</span><strong>{{ day.inside }}</strong></article>
+</section>
+<section class="panel day-notes"><div><span>Apertura</span><strong>{{ day.opened_at or '—' }}</strong><p>{{ day.opening_note or 'Sin nota' }}</p></div><div><span>Cierre</span><strong>{{ day.closed_at or '—' }}</strong><p>{{ day.closing_note or 'Sin nota de cierre' }}</p></div></section>
+<section class="panel"><div class="panel-heading"><div><h2>Movimientos de la jornada</h2><p>{{ records|length }} registros conservados</p></div><a href="/admin/records?from={{ day.date }}&to={{ day.date }}">Abrir filtros avanzados <i class="fa-solid fa-arrow-right"></i></a></div><div class="table-wrap"><table><thead><tr><th>Hora</th><th>Matrícula</th><th>Alumno</th><th>Movimiento</th><th>Resultado</th><th>Motivo</th><th>Dispositivo</th></tr></thead><tbody>
+{% for row in records %}<tr><td class="mono">{{ row.datetime.strftime('%H:%M:%S') }}</td><td>{{ row.student.matricula if row.student else (row.personnel.numero_empleado if row.personnel else '—') }}</td><td><strong>{{ row.person.nombre_completo if row.person else 'No identificado' }}</strong><small class="table-subtitle">{{ row.person_kind }}</small></td><td><span class="badge movement {{ (row.tipo_movimiento or 'none')|lower }}">{{ row.tipo_movimiento or '—' }}</span></td><td><span class="badge result {{ row.resultado|lower }}">{{ row.resultado }}</span></td><td>{{ row.motivo }}</td><td>{{ row.dispositivo }}</td></tr>{% else %}<tr><td colspan="7" class="empty-cell">No hay movimientos para esta jornada.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

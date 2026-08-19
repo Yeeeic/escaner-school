@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Jornadas{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><span class="eyebrow">CONTROL DIARIO</span><h1>{{ 'Papelera de jornadas' if in_trash else 'Jornadas operativas' }}</h1><p>{{ 'Restaura jornadas archivadas por error.' if in_trash else 'Cada día comienza en cero; el historial permanece guardado para consulta.' }}</p></div>
+  <div class="button-row">{% if in_trash %}<a class="button outline" href="/admin/days"><i class="fa-solid fa-arrow-left"></i> Volver a jornadas</a>{% else %}<a class="button ghost" href="/admin/days?papelera=1"><i class="fa-solid fa-trash-can"></i> Papelera ({{ trash_count }})</a><span class="day-status {{ current.status|lower }}"><i></i>{{ current.status }}</span>{% endif %}</div>
+</div>
+
+{% if not in_trash %}
+<section class="day-hero {{ current.status|lower }}">
+  <div><span class="eyebrow">JORNADA ACTUAL</span><h2>{{ current.date_label }}</h2><p>Abierta a las {{ current.opened_at or '—' }} · {{ current.opening_note }}</p></div>
+  <div class="day-metrics"><div><span>ENTRADAS</span><strong>{{ current.entries }}</strong></div><div><span>SALIDAS</span><strong>{{ current.exits }}</strong></div><div><span>RECHAZADOS</span><strong>{{ current.denied }}</strong></div><div><span>DENTRO</span><strong>{{ current.inside }}</strong></div></div>
+  <div class="day-action">
+  {% if current.status == 'ABIERTA' %}
+    <form method="post" action="/admin/days/{{ current.id }}/close"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Nota de cierre<input name="note" maxlength="500" placeholder="Turno concluido, incidencias…"></label><button class="button danger" type="submit"><i class="fa-solid fa-lock"></i> Cerrar jornada</button></form>
+  {% else %}
+    <div class="closed-message"><i class="fa-solid fa-circle-check"></i><div><strong>Jornada archivada</strong><span>Cerrada a las {{ current.closed_at }}. El escáner está bloqueado.</span></div></div>
+    <form method="post" action="/admin/days/{{ current.id }}/reopen"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="note" value="Continuación autorizada"><button class="button primary" type="submit"><i class="fa-solid fa-lock-open"></i> Reabrir hoy</button></form>
+  {% endif %}
+  </div>
+</section>
+<div class="info-strip"><i class="fa-solid fa-rotate"></i><div><strong>Reinicio automático seguro</strong><span>A medianoche se crea una jornada nueva y la ocupación vuelve a cero. Ningún registro histórico se elimina.</span></div></div>
+{% else %}<div class="trash-note"><i class="fa-solid fa-shield-halved"></i> Las jornadas borradas conservan sus movimientos y pueden restaurarse.</div>{% endif %}
+
+<form id="bulk-days" method="post" action="/admin/days/bulk" data-bulk-form data-confirm="¿Aplicar esta acción a las jornadas seleccionadas?"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="{{ 'restore' if in_trash else 'delete' }}"></form>
+<div class="bulk-toolbar"><label><input type="checkbox" data-select-all="days"> Seleccionar todas las jornadas históricas visibles</label><span data-selected-count="days">0 seleccionadas</span><button class="button {{ 'primary' if in_trash else 'danger' }}" type="submit" form="bulk-days"><i class="fa-solid {{ 'fa-rotate-left' if in_trash else 'fa-trash-can' }}"></i> {{ 'Restaurar selección' if in_trash else 'Borrar selección' }}</button></div>
+
+<section class="panel"><div class="panel-heading"><div><h2>{{ 'Jornadas borradas' if in_trash else 'Archivo de jornadas' }}</h2><p>Resumen diario y consulta completa de movimientos</p></div></div><div class="table-wrap"><table><thead><tr><th></th><th>Fecha</th><th>Estado</th><th>Apertura</th><th>Cierre</th><th>Entradas</th><th>Salidas</th><th>Rechazados</th><th>Pendientes</th><th>Nota</th><th>Acciones</th></tr></thead><tbody>
+{% for day in days %}<tr class="{{ 'deleted-row' if day.deleted }}"><td>{% if in_trash or day.id != current.id %}<input type="checkbox" name="ids" value="{{ day.id }}" form="bulk-days" data-select-item="days" aria-label="Seleccionar jornada {{ day.date_label }}">{% else %}<i class="fa-solid fa-shield-halved" title="Jornada actual protegida"></i>{% endif %}</td><td><strong>{{ day.date_label }}</strong></td><td>{% if day.deleted %}<span class="badge deleted">BORRADA</span>{% else %}<span class="badge day-badge {{ day.status|lower }}">{{ day.status }}</span>{% endif %}</td><td class="mono">{{ day.opened_at or '—' }}</td><td class="mono">{{ day.closed_at or '—' }}</td><td>{{ day.entries }}</td><td>{{ day.exits }}</td><td>{{ day.denied }}</td><td>{{ day.inside }}</td><td>{{ day.closing_note or day.opening_note }}</td><td><div class="row-actions">
+  <a class="icon-button" href="/admin/days/{{ day.id }}" title="Consultar jornada"><i class="fa-solid fa-eye"></i></a>
+  {% if day.deleted %}<form method="post" action="/admin/days/{{ day.id }}/restore"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="icon-button restore" title="Restaurar"><i class="fa-solid fa-rotate-left"></i></button></form>
+  {% elif day.id != current.id %}<form method="post" action="/admin/days/{{ day.id }}/delete" data-confirm="¿Mover la jornada del {{ day.date_label }} a la papelera? Sus movimientos se conservarán."><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="icon-button delete" title="Borrar"><i class="fa-solid fa-trash-can"></i></button></form>{% endif %}
+</div></td></tr>{% else %}<tr><td colspan="11" class="empty-cell">{{ 'La papelera está vacía.' if in_trash else 'Aún no hay jornadas.' }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

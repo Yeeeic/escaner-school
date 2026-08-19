@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Alumnos{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">DIRECTORIO INTELIGENTE</span>
+    <h1>{{ 'Papelera de alumnos' if in_trash else 'Alumnos' }}</h1>
+    <p>{{ 'Aquí puedes restaurar alumnos sin perder su historial.' if in_trash else 'Altas rápidas, QR automático y alertas de calidad.' }}</p>
+  </div>
+  <div class="button-row">
+    {% if in_trash %}
+      <a class="button outline" href="/admin/students"><i class="fa-solid fa-arrow-left"></i> Volver a alumnos</a>
+    {% else %}
+      <a class="button ghost" href="/admin/students?papelera=1"><i class="fa-solid fa-trash-can"></i> Papelera ({{ student_stats.trash }})</a>
+      <a class="button outline" href="/admin/students/import"><i class="fa-solid fa-file-arrow-up"></i> Importar lista</a>
+      <a class="button primary" href="/admin/students/new"><i class="fa-solid fa-user-plus"></i> Nuevo alumno</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if not in_trash %}
+<section class="student-summary-grid">
+  <a href="/admin/students" class="student-summary"><i class="fa-solid fa-users"></i><div><span>TOTAL</span><strong>{{ student_stats.total }}</strong></div></a>
+  <a href="/admin/students?estado=activo" class="student-summary green"><i class="fa-solid fa-circle-check"></i><div><span>ACTIVOS</span><strong>{{ student_stats.active }}</strong></div></a>
+  <a href="/admin/students?alerta=por_vencer" class="student-summary gold"><i class="fa-regular fa-calendar-xmark"></i><div><span>VENCEN EN 30 DÍAS</span><strong>{{ student_stats.expiring }}</strong></div></a>
+  <a href="/admin/students?alerta=sin_foto" class="student-summary red"><i class="fa-solid fa-camera"></i><div><span>SIN FOTOGRAFÍA</span><strong>{{ student_stats.no_photo }}</strong></div></a>
+</section>
+{% endif %}
+
+<form class="filter-bar" method="get">
+  {% if in_trash %}<input type="hidden" name="papelera" value="1">{% endif %}
+  <div class="filter-search"><i class="fa-solid fa-magnifying-glass"></i><input name="q" value="{{ filters.q }}" placeholder="Escribe nombre o matrícula…"></div>
+  <select name="carrera"><option value="">Todas las carreras</option>{% for item in careers %}<option {{ 'selected' if filters.carrera == item }}>{{ item }}</option>{% endfor %}</select>
+  <select name="plantel"><option value="">Todos los planteles</option>{% for item in campuses %}<option {{ 'selected' if filters.plantel == item }}>{{ item }}</option>{% endfor %}</select>
+  {% if not in_trash %}
+  <select name="estado"><option value="">Todo estado</option><option value="activo" {{ 'selected' if filters.estado == 'activo' }}>Activos</option><option value="inactivo" {{ 'selected' if filters.estado == 'inactivo' }}>Inactivos</option></select>
+  <select name="alerta"><option value="">Sin alerta específica</option><option value="por_vencer" {{ 'selected' if filters.alerta == 'por_vencer' }}>Por vencer</option><option value="vencida" {{ 'selected' if filters.alerta == 'vencida' }}>Vencidas</option><option value="sin_foto" {{ 'selected' if filters.alerta == 'sin_foto' }}>Sin fotografía</option></select>
+  {% endif %}
+  <button class="button dark">Aplicar</button>
+  {% if filters.q or filters.carrera or filters.plantel or filters.estado or filters.alerta %}<a class="button ghost" href="{{ '/admin/students?papelera=1' if in_trash else '/admin/students' }}">Limpiar</a>{% endif %}
+</form>
+
+{% if in_trash %}<div class="trash-note"><i class="fa-solid fa-shield-halved"></i> Borrado seguro: los movimientos históricos y el QR permanecen archivados.</div>{% endif %}
+
+<form id="bulk-students" method="post" action="/admin/students/bulk" data-bulk-form data-confirm="¿Aplicar esta acción a todos los alumnos seleccionados?"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="{{ 'restore' if in_trash else 'delete' }}"></form>
+<div class="bulk-toolbar"><label><input type="checkbox" data-select-all="students"> Seleccionar todos los visibles</label><span data-selected-count="students">0 seleccionados</span><button class="button {{ 'primary' if in_trash else 'danger' }}" type="submit" form="bulk-students"><i class="fa-solid {{ 'fa-rotate-left' if in_trash else 'fa-trash-can' }}"></i> {{ 'Restaurar selección' if in_trash else 'Borrar selección' }}</button></div>
+
+<section class="panel"><div class="table-wrap"><table>
+  <thead><tr><th></th><th>Alumno</th><th>Matrícula</th><th>Carrera</th><th>Plantel</th><th>Vigencia</th><th>Estado</th><th>Acciones</th></tr></thead>
+  <tbody>
+  {% for student in students %}
+  <tr class="{{ 'deleted-row' if student.eliminado }}">
+    <td><input type="checkbox" name="ids" value="{{ student.id }}" form="bulk-students" data-select-item="students" aria-label="Seleccionar {{ student.nombre_completo }}"></td>
+    <td><div class="person-cell"><img src="{{ '/static/uploads/' + student.foto if student.foto else '/static/images/default-avatar.svg' }}" alt=""><div><strong>{{ student.nombre_completo }}</strong><small>{{ student.turno }}{% if not student.foto %} · <span class="attention-text">Falta foto</span>{% endif %}</small></div></div></td>
+    <td><span class="mono">{{ student.matricula }}</span></td><td>{{ student.carrera }}<small class="table-subtitle">Grupo {{ student.grupo }}</small></td><td>{{ student.plantel }}</td>
+    <td><span class="{{ 'attention-text' if student.fecha_vencimiento < today }}">{{ student.fecha_vencimiento.strftime('%d/%m/%Y') }}</span></td>
+    <td>{% if student.eliminado %}<span class="badge deleted">BORRADO</span>{% else %}<span class="badge result {{ 'autorizado' if student.activo and student.fecha_vencimiento >= today else 'denegado' }}">{{ 'ACTIVO' if student.activo and student.fecha_vencimiento >= today else ('VENCIDA' if student.fecha_vencimiento < today else 'INACTIVO') }}</span>{% endif %}</td>
+    <td><div class="row-actions">
+      {% if student.eliminado %}
+      <form method="post" action="/admin/students/{{ student.id }}/restore"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="icon-button restore" title="Restaurar"><i class="fa-solid fa-rotate-left"></i></button></form>
+      {% else %}
+      <a class="icon-button" href="/admin/students/{{ student.id }}/edit" title="Editar"><i class="fa-solid fa-pen"></i></a>
+      <form method="post" action="/admin/students/{{ student.id }}/delete" data-confirm="¿Mover a {{ student.nombre_completo }} a la papelera? Su historial no se perderá."><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="icon-button delete" title="Borrar"><i class="fa-solid fa-trash-can"></i></button></form>
+      {% endif %}
+      <a class="icon-button" href="/admin/students/{{ student.id }}" title="Perfil y QR"><i class="fa-solid fa-id-card"></i></a>
+    </div></td>
+  </tr>
+  {% else %}<tr><td colspan="8" class="empty-cell">{{ 'La papelera está vacía.' if in_trash else 'No se encontraron alumnos.' }}</td></tr>{% endfor %}
+  </tbody>
+</table></div></section>
+{% endblock %}

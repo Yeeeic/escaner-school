@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="csrf-token" content="{{ csrf_token }}"><meta name="access-cooldown" content="{{ cooldown }}">
+  <title>Escáner · Escáner School</title>
+  <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="scanner-body {{ 'kiosk' if kiosk }}">
+  <div class="scanner-noise"></div>
+  <header class="scanner-header">
+    <div class="brand light"><span class="brand-mark"><i class="fa-solid fa-shield-halved"></i></span><span>ESCÁNER<small>SCHOOL</small></span></div>
+    <div class="scanner-title"><span>SISTEMA INTELIGENTE DE CONTROL DE ACCESO</span><strong>Escanea tu credencial</strong></div>
+    <div class="clock-block"><strong id="live-clock">--:--:--</strong><span id="live-date">CARGANDO FECHA</span></div>
+  </header>
+  <main class="scanner-layout">
+    <section class="camera-section">
+      <div class="camera-toolbar"><div class="status-group"><span class="system-status" id="camera-status"><i></i> INICIANDO CÁMARA</span><span class="system-status online"><i></i> SERVIDOR ACTIVO</span><span class="system-status online"><i></i> BASE DE DATOS ACTIVA</span><span class="system-status" id="day-operation-status"><i></i> JORNADA…</span></div><div class="camera-actions"><select id="camera-select" aria-label="Seleccionar cámara"><option>Cámara predeterminada</option></select><button id="fullscreen-button" title="Pantalla completa"><i class="fa-solid fa-expand"></i></button>{% if not kiosk %}<a href="/admin" title="Administración"><i class="fa-solid fa-gear"></i></a>{% endif %}</div></div>
+      <div class="video-shell" id="video-shell">
+        <video id="camera-video" autoplay muted playsinline></video><canvas id="capture-canvas" hidden></canvas>
+        <div class="camera-vignette"></div><div class="scan-frame"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="scan-line"></div><div class="qr-hint"><i class="fa-solid fa-qrcode"></i></div></div>
+        <div class="scan-message" id="scan-message"><span class="pulse-dot"></span><strong>ESPERANDO CREDENCIAL</strong><small>COLOCA EL QR FRENTE A LA CÁMARA</small></div>
+        <div class="result-flash" id="result-flash"><i></i><strong></strong><span></span></div>
+      </div>
+      <div class="scanner-bottom"><div class="occupancy"><i class="fa-solid fa-users"></i><span>PERSONAS DENTRO</span><strong id="scanner-inside">0</strong></div><div class="today-mini"><div><span>ENTRADAS</span><strong id="scanner-entries">0</strong></div><div><span>SALIDAS</span><strong id="scanner-exits">0</strong></div><div><span>RECHAZADOS</span><strong id="scanner-denied">0</strong></div></div></div>
+    </section>
+    <aside class="credential-section">
+      <div class="credential-placeholder" id="credential-placeholder"><div class="placeholder-shield"><i class="fa-solid fa-id-card"></i></div><span>TERMINAL LISTA</span><h2>ESPERANDO<br>CREDENCIAL</h2><p>La información del alumno aparecerá aquí después de validar el código.</p><div class="secure-line"><i class="fa-solid fa-lock"></i> CONEXIÓN SEGURA</div></div>
+      <article class="digital-id" id="digital-id" hidden>
+        <div class="id-top"><div class="mini-brand"><i class="fa-solid fa-shield-halved"></i><span>ESCÁNER<small>SCHOOL</small></span></div><span class="id-state" id="id-state">VIGENTE</span></div>
+        <div class="id-body"><img id="id-photo" src="/static/images/default-avatar.svg" alt="Fotografía"><div class="id-person"><span id="id-person-type">ESTUDIANTE</span><h2 id="id-name">—</h2><strong id="id-matricula">—</strong></div></div>
+        <dl class="id-details"><div><dt>CARRERA</dt><dd id="id-career">—</dd></div><div><dt>PLANTEL</dt><dd id="id-campus">—</dd></div><div><dt>TURNO</dt><dd id="id-shift">—</dd></div><div><dt>VIGENCIA</dt><dd id="id-expires">—</dd></div></dl>
+        <div class="id-result" id="id-result"><i class="fa-solid fa-circle-check"></i><div><span id="id-access-label">ACCESO AUTORIZADO</span><strong id="id-movement">ENTRADA REGISTRADA</strong></div></div>
+        <div class="id-time"><div><span>FECHA</span><strong id="id-date">—</strong></div><div><span>HORA</span><strong id="id-time">—</strong></div></div>
+      </article>
+      <section class="recent-scans"><div class="recent-heading"><span>ÚLTIMOS ACCESOS</span><i class="fa-solid fa-wave-square"></i></div><div id="recent-list"><div class="recent-empty">Sin movimientos recientes</div></div></section>
+    </aside>
+  </main>
+  <div class="toast" id="scanner-toast"></div>
+  <script src="/static/js/scanner.js" defer></script>
+</body>
+</html>
