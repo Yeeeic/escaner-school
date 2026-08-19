@@ -71,13 +71,6 @@ Proyecto de portafolio desarrollado por **Jean Carlos Bustos Ramos**, estudiante
 - menú de consultas rápidas en Registros: entradas, salidas, rechazos, todos, hoy, semana, mes y personas sin salida;
 - el Excel de entradas agrega una hoja de Personas únicas con primera entrada, última entrada y total de entradas.
 
-## Novedades de la versión 7
-
-- nueva marca visible **Escáner School** en el panel, escáner, inicio de sesión y credencial digital;
-- títulos del navegador, reportes y credenciales PDF actualizados;
-- compatibilidad automática con instalaciones cuyo `.env` todavía contiene `INSTITUTION_NAME=Smart Access University`;
-- identificadores QR, base de datos, cookies y carpeta de instalación conservados para no romper datos existentes.
-
 ### Actualizar una instalación existente
 
 Conserva tu archivo `.env`, `smart_access.db`, fotografías y QR. Copia los archivos de esta versión sobre la instalación anterior y ejecuta:
